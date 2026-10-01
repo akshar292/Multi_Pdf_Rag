@@ -8,22 +8,12 @@ from pypdf import PdfReader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
 
 # =========================================================
 # ENV
 # =========================================================
 
 load_dotenv()
-
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-if not GOOGLE_API_KEY:
-    raise ValueError(
-        "GOOGLE_API_KEY is not set in environment variables."
-    )
 
 
 # =========================================================
@@ -33,31 +23,18 @@ if not GOOGLE_API_KEY:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 UPLOAD_DIR = BASE_DIR / "uploads"
-CHROMA_DIR = BASE_DIR / "chroma_db"
 
 UPLOAD_DIR.mkdir(
     parents=True,
     exist_ok=True
 )
 
-CHROMA_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
-
 
 # =========================================================
-# EMBEDDINGS
-# =========================================================
-# IMPORTANT:
-# We are NOT loading HuggingFace locally.
-# This saves RAM on Render Free.
+# DOCUMENT STORAGE
 # =========================================================
 
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/gemini-embedding-001",
-    google_api_key=GOOGLE_API_KEY
-)
+documents_store = []
 
 
 # =========================================================
@@ -67,17 +44,6 @@ embeddings = GoogleGenerativeAIEmbeddings(
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200
-)
-
-
-# =========================================================
-# VECTOR DATABASE
-# =========================================================
-
-vectorstore = Chroma(
-    collection_name="multi_pdf_rag",
-    persist_directory=str(CHROMA_DIR),
-    embedding_function=embeddings
 )
 
 
@@ -104,11 +70,15 @@ def process_pdf(
     ):
 
         try:
+
             text = page.extract_text()
+
         except Exception as e:
+
             print(
                 f"Error extracting page {page_number}: {e}"
             )
+
             continue
 
         if not text:
@@ -134,6 +104,7 @@ def process_pdf(
     # -----------------------------------------------------
 
     if not documents:
+
         return 0
 
     # -----------------------------------------------------
@@ -144,27 +115,18 @@ def process_pdf(
         documents
     )
 
-    if not chunks:
-        return 0
-
     # -----------------------------------------------------
-    # ADD TO CHROMA
+    # STORE DOCUMENTS
     # -----------------------------------------------------
 
-    try:
+    documents_store.extend(
+        chunks
+    )
 
-        vectorstore.add_documents(
-            documents=chunks
-        )
-
-    except Exception as e:
-
-        print(
-            "Chroma indexing error:",
-            e
-        )
-
-        raise
+    print(
+        f"Indexed {len(chunks)} chunks from "
+        f"{original_filename}"
+    )
 
     return len(chunks)
 
@@ -194,7 +156,7 @@ def save_uploaded_file(
 
 
 # =========================================================
-# RETRIEVE DOCUMENTS
+# SIMPLE TEXT RETRIEVAL
 # =========================================================
 
 def retrieve_documents(
@@ -202,20 +164,66 @@ def retrieve_documents(
     k: int = 5
 ):
 
-    try:
-
-        documents = vectorstore.similarity_search(
-            question,
-            k=k
-        )
-
-        return documents
-
-    except Exception as e:
+    if not documents_store:
 
         print(
-            "Retrieval error:",
-            e
+            "No documents uploaded."
         )
 
         return []
+
+    question_words = set(
+        question.lower().split()
+    )
+
+    scored_documents = []
+
+    for document in documents_store:
+
+        text = document.page_content.lower()
+
+        score = 0
+
+        for word in question_words:
+
+            if len(word) < 2:
+                continue
+
+            if word in text:
+
+                score += text.count(word)
+
+        if score > 0:
+
+            scored_documents.append(
+                (
+                    score,
+                    document
+                )
+            )
+
+    # -----------------------------------------------------
+    # SORT BY RELEVANCE
+    # -----------------------------------------------------
+
+    scored_documents.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
+
+    # -----------------------------------------------------
+    # TOP K
+    # -----------------------------------------------------
+
+    results = [
+        document
+        for score, document
+        in scored_documents[:k]
+    ]
+
+    print(
+        f"Retrieved {len(results)} documents "
+        f"for question: {question}"
+    )
+
+    return results

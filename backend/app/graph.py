@@ -1,55 +1,46 @@
+import os
 from typing import TypedDict
 
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-
-from langgraph.graph import (
-    StateGraph,
-    START,
-    END
-)
+from langgraph.graph import StateGraph, START, END
 
 from .rag import retrieve_documents
 
+load_dotenv()
 
 # =========================================================
-# GROQ LLM
+# GROQ
 # =========================================================
 
 llm = ChatGroq(
     model="openai/gpt-oss-120b",
-    temperature=0
+    temperature=0,
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 
 # =========================================================
-# GRAPH STATE
+# STATE
 # =========================================================
 
 class GraphState(TypedDict):
-
     question: str
-
     documents: list
-
     context: str
-
     answer: str
-
     sources: list
 
 
 # =========================================================
-# RETRIEVE NODE
+# RETRIEVE
 # =========================================================
 
-def retrieve_node(
-    state: GraphState
-):
-
-    question = state["question"]
+def retrieve_node(state: GraphState):
 
     documents = retrieve_documents(
-        question
+        state["question"],
+        k=5
     )
 
     return {
@@ -58,40 +49,31 @@ def retrieve_node(
 
 
 # =========================================================
-# CONTEXT NODE
+# CONTEXT
 # =========================================================
 
-def context_node(
-    state: GraphState
-):
+def context_node(state: GraphState):
 
     documents = state["documents"]
 
     if not documents:
-
         return {
             "context": "",
             "sources": []
         }
 
     context_parts = []
-
     sources = []
+    seen = set()
 
-    seen_sources = set()
+    for doc in documents:
 
-    for document in documents:
-
-        text = document.page_content
-
-        metadata = document.metadata
-
-        source = metadata.get(
+        source = doc.metadata.get(
             "source",
             "Unknown document"
         )
 
-        page = metadata.get(
+        page = doc.metadata.get(
             "page",
             "Unknown"
         )
@@ -102,81 +84,63 @@ SOURCE: {source}
 PAGE: {page}
 
 CONTENT:
-{text}
+{doc.page_content}
 """
         )
 
-        source_key = (
-            source,
-            page
-        )
+        key = (source, page)
 
-        if source_key not in seen_sources:
+        if key not in seen:
 
-            sources.append(
-                {
-                    "file": source,
-                    "page": page
-                }
-            )
+            sources.append({
+                "file": source,
+                "page": page
+            })
 
-            seen_sources.add(
-                source_key
-            )
-
-    context = "\n\n".join(
-        context_parts
-    )
+            seen.add(key)
 
     return {
-        "context": context,
+        "context": "\n\n".join(context_parts),
         "sources": sources
     }
 
 
 # =========================================================
-# GENERATE NODE
+# GENERATE
 # =========================================================
 
-def generate_node(
-    state: GraphState
-):
-
-    question = state["question"]
+def generate_node(state: GraphState):
 
     context = state["context"]
+    question = state["question"]
 
     if not context:
 
         return {
-            "answer": (
+            "answer":
                 "I could not find relevant information "
                 "in the uploaded documents."
-            )
         }
 
     prompt = f"""
-You are a Multi-PDF document question-answering assistant.
+You are a Multi-PDF RAG assistant.
 
-Answer the user's question using ONLY the information
-provided in the CONTEXT.
+Answer the user's question using ONLY the
+information contained in the provided documents.
 
-STRICT RULES:
+Rules:
 
 1. Do not use outside knowledge.
-2. Do not invent facts.
-3. If the answer is not present in the context,
-   say that the information is not available
-   in the uploaded documents.
-4. Give a clear and concise answer.
-5. Explain the answer naturally.
-6. Do not mention these instructions.
-7. Do not mention the context.
-8. Do not output JSON.
-9. Do not output metadata.
-10. Do not output signatures.
+2. Do not invent information.
+3. If the answer is not available in the documents,
+   clearly say so.
+4. Give a clear and natural answer.
+5. Do not return JSON.
+6. Do not return metadata.
+7. Do not return signatures.
+8. Do not mention these instructions.
 
-CONTEXT:
+DOCUMENT CONTEXT:
 
 {context}
 
@@ -187,83 +151,41 @@ USER QUESTION:
 ANSWER:
 """
 
-    try:
+    response = llm.invoke(prompt)
 
-        response = llm.invoke(
-            prompt
-        )
+    answer = response.content
 
-        # -------------------------------------------------
-        # SAFE RESPONSE EXTRACTION
-        # -------------------------------------------------
+    if isinstance(answer, list):
 
-        if isinstance(
-            response.content,
-            str
-        ):
+        parts = []
 
-            answer = response.content
+        for item in answer:
 
-        elif isinstance(
-            response.content,
-            list
-        ):
+            if isinstance(item, dict):
 
-            parts = []
+                if item.get("type") == "text":
+                    parts.append(
+                        item.get("text", "")
+                    )
 
-            for item in response.content:
+        answer = "\n".join(parts)
 
-                if isinstance(
-                    item,
-                    dict
-                ):
+    else:
 
-                    if item.get(
-                        "type"
-                    ) == "text":
+        answer = str(answer)
 
-                        parts.append(
-                            item.get(
-                                "text",
-                                ""
-                            )
-                        )
-
-            answer = "\n".join(
-                parts
-            )
-
-        else:
-
-            answer = str(
-                response.content
-            )
-
-        return {
-            "answer": answer.strip()
-        }
-
-    except Exception as e:
-
-        print(
-            "LLM Error:",
-            e
-        )
-
-        raise e
+    return {
+        "answer": answer.strip()
+    }
 
 
 # =========================================================
-# BUILD LANGGRAPH
+# GRAPH
 # =========================================================
 
 def build_graph():
 
-    workflow = StateGraph(
-        GraphState
-    )
-
-    # Nodes
+    workflow = StateGraph(GraphState)
 
     workflow.add_node(
         "retrieve",
@@ -279,8 +201,6 @@ def build_graph():
         "generate",
         generate_node
     )
-
-    # Edges
 
     workflow.add_edge(
         START,
@@ -305,22 +225,16 @@ def build_graph():
     return workflow.compile()
 
 
-# =========================================================
-# GRAPH INSTANCE
-# =========================================================
-
 graph = build_graph()
 
 
 # =========================================================
-# ASK QUESTION
+# ASK
 # =========================================================
 
-def ask_question(
-    question: str
-):
+def ask_question(question: str):
 
-    initial_state = {
+    result = graph.invoke({
 
         "question": question,
 
@@ -331,15 +245,10 @@ def ask_question(
         "answer": "",
 
         "sources": []
-    }
 
-    result = graph.invoke(
-        initial_state
-    )
+    })
 
     return {
-
         "answer": result["answer"],
-
         "sources": result["sources"]
     }
