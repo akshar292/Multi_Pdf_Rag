@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -8,7 +9,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 # =========================================================
@@ -16,6 +17,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 # =========================================================
 
 load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+if not GOOGLE_API_KEY:
+    raise ValueError(
+        "GOOGLE_API_KEY is not set in environment variables."
+    )
 
 
 # =========================================================
@@ -39,11 +47,16 @@ CHROMA_DIR.mkdir(
 
 
 # =========================================================
-# EMBEDDING MODEL
+# EMBEDDINGS
+# =========================================================
+# IMPORTANT:
+# We are NOT loading HuggingFace locally.
+# This saves RAM on Render Free.
 # =========================================================
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+embeddings = GoogleGenerativeAIEmbeddings(
+    model="models/gemini-embedding-001",
+    google_api_key=GOOGLE_API_KEY
 )
 
 
@@ -90,7 +103,18 @@ def process_pdf(
         start=1
     ):
 
-        text = page.extract_text()
+        try:
+            text = page.extract_text()
+        except Exception as e:
+            print(
+                f"Error extracting page {page_number}: {e}"
+            )
+            continue
+
+        if not text:
+            continue
+
+        text = text.strip()
 
         if not text:
             continue
@@ -120,15 +144,27 @@ def process_pdf(
         documents
     )
 
+    if not chunks:
+        return 0
+
     # -----------------------------------------------------
     # ADD TO CHROMA
     # -----------------------------------------------------
 
-    if chunks:
+    try:
 
         vectorstore.add_documents(
-            chunks
+            documents=chunks
         )
+
+    except Exception as e:
+
+        print(
+            "Chroma indexing error:",
+            e
+        )
+
+        raise
 
     return len(chunks)
 
