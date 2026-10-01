@@ -1,0 +1,736 @@
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+  margin: 0;
+
+  font-family:
+    Inter,
+    Arial,
+    sans-serif;
+
+  background:
+    #f5f7fb;
+
+  color:
+    #1f2937;
+}
+
+
+button,
+textarea,
+input {
+  font-family:
+    inherit;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app {
+  min-height: 100vh;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+  background:
+    linear-gradient(135deg,
+      #2563eb,
+      #4f46e5);
+
+  color: white;
+
+  padding:
+    25px 20px;
+
+  box-shadow:
+    0 4px 15px rgba(0,
+      0,
+      0,
+      0.1);
+}
+
+
+.header-content {
+  max-width:
+    1100px;
+
+  margin:
+    auto;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    15px;
+}
+
+
+.logo {
+  width:
+    55px;
+
+  height:
+    55px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  background:
+    rgba(255,
+      255,
+      255,
+      0.2);
+
+  border-radius:
+    15px;
+
+  font-size:
+    28px;
+}
+
+
+.header h1 {
+  margin:
+    0;
+
+  font-size:
+    28px;
+}
+
+
+.header p {
+  margin:
+    5px 0 0;
+
+  opacity:
+    0.9;
+}
+
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.container {
+  max-width:
+    900px;
+
+  margin:
+    40px auto;
+
+  padding:
+    0 20px;
+}
+
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.hero {
+  text-align:
+    center;
+
+  margin-bottom:
+    35px;
+}
+
+
+.hero h2 {
+  font-size:
+    30px;
+
+  margin-bottom:
+    10px;
+}
+
+
+.hero p {
+  color:
+    #6b7280;
+
+  line-height:
+    1.7;
+}
+
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.upload-card,
+.chat-card {
+  background:
+    white;
+
+  border-radius:
+    18px;
+
+  padding:
+    28px;
+
+  margin-bottom:
+    25px;
+
+  box-shadow:
+    0 5px 25px rgba(0,
+      0,
+      0,
+      0.07);
+
+  border:
+    1px solid #e5e7eb;
+}
+
+
+/* =====================================================
+   SECTION TITLE
+===================================================== */
+
+.section-title {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    15px;
+
+  margin-bottom:
+    25px;
+}
+
+
+.section-title .icon {
+  width:
+    50px;
+
+  height:
+    50px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  background:
+    #eff6ff;
+
+  border-radius:
+    12px;
+
+  font-size:
+    25px;
+}
+
+
+.section-title h2 {
+  margin:
+    0;
+
+  font-size:
+    22px;
+}
+
+
+.section-title p {
+  margin:
+    5px 0 0;
+
+  color:
+    #6b7280;
+}
+
+
+/* =====================================================
+   FILE INPUT
+===================================================== */
+
+.file-input-wrapper {
+  margin-bottom:
+    20px;
+}
+
+
+.file-input-wrapper input {
+  display:
+    none;
+}
+
+
+.file-input-wrapper label {
+  display:
+    inline-block;
+
+  padding:
+    13px 20px;
+
+  background:
+    #eff6ff;
+
+  color:
+    #2563eb;
+
+  border:
+    1px dashed #60a5fa;
+
+  border-radius:
+    10px;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    600;
+}
+
+
+.file-input-wrapper label:hover {
+  background:
+    #dbeafe;
+}
+
+
+/* =====================================================
+   FILE LIST
+===================================================== */
+
+.selected-files {
+  margin:
+    20px 0;
+}
+
+
+.selected-files h3 {
+  font-size:
+    16px;
+}
+
+
+.file-row {
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  padding:
+    10px 14px;
+
+  background:
+    #f8fafc;
+
+  border-radius:
+    8px;
+
+  margin-top:
+    7px;
+
+  font-size:
+    14px;
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.upload-button,
+.ask-button {
+  width:
+    100%;
+
+  border:
+    none;
+
+  padding:
+    14px;
+
+  border-radius:
+    10px;
+
+  font-size:
+    15px;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+
+  transition:
+    0.2s;
+}
+
+
+.upload-button {
+  background:
+    #2563eb;
+
+  color:
+    white;
+}
+
+
+.upload-button:hover {
+  background:
+    #1d4ed8;
+}
+
+
+.ask-button {
+  background:
+    #4f46e5;
+
+  color:
+    white;
+
+  margin-top:
+    15px;
+}
+
+
+.ask-button:hover {
+  background:
+    #4338ca;
+}
+
+
+button:disabled {
+  opacity:
+    0.5;
+
+  cursor:
+    not-allowed;
+}
+
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+textarea {
+  width:
+    100%;
+
+  resize:
+    vertical;
+
+  padding:
+    15px;
+
+  border:
+    1px solid #d1d5db;
+
+  border-radius:
+    10px;
+
+  outline:
+    none;
+
+  font-size:
+    15px;
+
+  line-height:
+    1.6;
+}
+
+
+textarea:focus {
+  border-color:
+    #6366f1;
+
+  box-shadow:
+    0 0 0 3px rgba(99,
+      102,
+      241,
+      0.1);
+}
+
+
+/* =====================================================
+   UPLOAD RESULT
+===================================================== */
+
+.upload-results {
+  margin-top:
+    20px;
+}
+
+
+.upload-success,
+.upload-error {
+  padding:
+    13px;
+
+  border-radius:
+    10px;
+
+  margin-top:
+    8px;
+
+  font-size:
+    14px;
+}
+
+
+.upload-success {
+  background:
+    #ecfdf5;
+
+  color:
+    #047857;
+}
+
+
+.upload-error {
+  background:
+    #fef2f2;
+
+  color:
+    #b91c1c;
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.loading {
+  margin-top:
+    20px;
+
+  padding:
+    18px;
+
+  background:
+    #eff6ff;
+
+  color:
+    #1d4ed8;
+
+  border-radius:
+    10px;
+
+  line-height:
+    1.8;
+
+  text-align:
+    center;
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.error {
+  margin-top:
+    20px;
+
+  padding:
+    15px;
+
+  background:
+    #fef2f2;
+
+  color:
+    #b91c1c;
+
+  border:
+    1px solid #fecaca;
+
+  border-radius:
+    10px;
+}
+
+
+/* =====================================================
+   ANSWER
+===================================================== */
+
+.answer-section {
+  margin-top:
+    30px;
+}
+
+
+.answer-section h3 {
+  margin-bottom:
+    10px;
+}
+
+
+.answer {
+  padding:
+    20px;
+
+  background:
+    #f8fafc;
+
+  border-left:
+    4px solid #4f46e5;
+
+  border-radius:
+    10px;
+
+  line-height:
+    1.8;
+
+  white-space:
+    pre-wrap;
+
+  font-size:
+    15px;
+}
+
+
+/* =====================================================
+   SOURCES
+===================================================== */
+
+.sources-section {
+  margin-top:
+    25px;
+}
+
+
+.sources-section h3 {
+  margin-bottom:
+    12px;
+}
+
+
+.source-item {
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    center;
+
+  padding:
+    14px 16px;
+
+  margin-top:
+    8px;
+
+  background:
+    #f3f4f6;
+
+  border-radius:
+    10px;
+
+  border:
+    1px solid #e5e7eb;
+}
+
+
+.source-item span {
+  background:
+    #e0e7ff;
+
+  color:
+    #3730a3;
+
+  padding:
+    5px 10px;
+
+  border-radius:
+    20px;
+
+  font-size:
+    13px;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+  text-align:
+    center;
+
+  padding:
+    30px;
+
+  color:
+    #6b7280;
+
+  font-size:
+    14px;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .container {
+    margin-top:
+      25px;
+
+    padding:
+      0 12px;
+  }
+
+
+  .upload-card,
+  .chat-card {
+    padding:
+      20px;
+  }
+
+
+  .header h1 {
+    font-size:
+      21px;
+  }
+
+
+  .hero h2 {
+    font-size:
+      24px;
+  }
+
+
+  .source-item {
+    flex-direction:
+      column;
+
+    align-items:
+      flex-start;
+
+    gap:
+      8px;
+  }
+
+}
